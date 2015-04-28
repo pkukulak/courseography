@@ -3,6 +3,7 @@ module Main where
 import Control.Monad (msum)
 import Control.Monad.IO.Class (liftIO)
 import Data.Maybe (fromMaybe)
+import Data.Time.Format (FormatTime)
 import Happstack.Server
 import GridResponse
 import GraphResponse
@@ -18,11 +19,31 @@ import Css.CssGen
 import Filesystem.Path.CurrentOS
 import System.Directory
 import System.Environment (lookupEnv)
+import System.IO (hSetBuffering, stdout, stderr, BufferMode(LineBuffering))
+import System.Log.Logger (logM, updateGlobalLogger, rootLoggerName, setLevel, Priority(INFO))
 import CourseographyFacebook
 import qualified Data.Text as T
 
+-- | log access requests using hslogger and a condensed log formatting
+--
+logMAccessShort :: FormatTime t => LogAccess t
+logMAccessShort host user time requestLine responseCode size referer userAgent =
+    logM "Happstack.Server.AccessLog.Combined" INFO $ unwords
+        [ host
+        , user
+        , requestLine
+        , show responseCode
+        , referer
+        ]
+
 main :: IO ()
 main = do
+    -- Use line buffering to ensure logging messages are printed correctly
+    hSetBuffering stdout LineBuffering
+    hSetBuffering stderr LineBuffering
+    -- Set log level to INFO so requests are logged to stdout
+    updateGlobalLogger rootLoggerName $ setLevel INFO
+
     generateCSS
     cwd <- getCurrentDirectory
     redirectUrlGraphEmail <- retrieveAuthURL testUrl
@@ -35,8 +56,11 @@ main = do
     portStr <- lookupEnv "PORT"
     let port = read (fromMaybe "8000" portStr) :: Int
 
-    print "Server is running..."
-    simpleHTTP config { port = port } $ msum
+    -- Start the HTTP server
+    simpleHTTP nullConf {
+        port      = port
+      , logAccess = Just logMAccessShort
+    } $ msum
         [ do
               nullDir
               seeOther "graph" (toResponse "Redirecting to /graph"),
