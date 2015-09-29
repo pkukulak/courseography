@@ -4,12 +4,12 @@ module Latex where
 
 import Text.LaTeX
 import Text.LaTeX.Packages.Graphicx
+import ImageConversion
 
-main :: IO ()
 main = do
     tex <- execLaTeXT example
     renderFile "example.tex" tex
-    --compileTexToPDF "example.tex" "example.pdf"
+    compileTexToPDF "example.tex" "example.pdf"
 
 {- Here are some constants that we need to
    feed in as options to the image processor. -}
@@ -45,7 +45,8 @@ body = do
                      angle, noTrim,         -- Pretty self-explanatory.
                      noClip, startPageOne]
                     "isk.png"
-    "Text is inserted just as you would expect. "
+    "Text is inserted just as you would expect."
+    "\n"
     "Note how ugly it looks. This is fine, because "
     "we don't be writing much text."
     

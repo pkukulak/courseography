@@ -1,4 +1,5 @@
-module ImageConversion where
+module ImageConversion
+    (createImageFile, removeImage, compileTexToPDF) where
 
 import System.Process
 import GHC.IO.Handle.Types
@@ -27,6 +28,27 @@ convertToImage inName outName = createProcess $ CreateProcess
                                   False
                                   False
                                   False
+
+compileTexToPDF :: String -> String -> IO
+                     (Maybe Handle,
+                      Maybe Handle,
+                      Maybe Handle,
+                      ProcessHandle)
+
+compileTexToPDF inName outName = createProcess $ CreateProcess
+                                   (ShellCommand $ "pdflatex " ++
+                                                   inName ++
+                                                   " " ++
+                                                   outName
+                                   )
+                                   Nothing
+                                   Nothing
+                                   CreatePipe
+                                   CreatePipe
+                                   CreatePipe
+                                   False
+                                   False
+                                   False
 -- | Removes a file.
 removeImage :: String -> IO
                      (Maybe Handle,
